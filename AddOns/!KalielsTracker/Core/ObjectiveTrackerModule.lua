@@ -58,6 +58,10 @@ function KT_ObjectiveTrackerModuleMixin:OnEvent(event, ...)
 	-- override in your mixin
 end
 
+function KT_ObjectiveTrackerModuleMixin:OnHide()
+	self:EndSlide();
+end
+
 function KT_ObjectiveTrackerModuleMixin:SetContainer(container)
 	self.parentContainer = container;
 	self:SetParent(container);
@@ -122,7 +126,9 @@ end
 
 -- returns heightUsed, isTruncated
 function KT_ObjectiveTrackerModuleMixin:Update(availableHeight, dirtyUpdate)
-	if not self:CanUpdate() then
+	-- If the parent container is collapsed, the update must run, otherwise funky things can happen.
+	-- Specifically, if the scenario module is sliding, it will not disappear when its container is collapsed until the slide is over.
+	if not self:CanUpdate() and not self.parentContainer:IsCollapsed() then
 		return self:GetContentsHeight(), self:IsTruncated();
 	end
 
@@ -277,6 +283,14 @@ function KT_ObjectiveTrackerModuleMixin:GetBlock(id, optTemplate)
 	return block, wasAlreadyActive;
 end
 
+function KT_ObjectiveTrackerModuleMixin:EnumerateActiveBlocks(callback)
+	for template, blocks in pairs(self.usedBlocks) do
+		for blockID, block in pairs(blocks) do
+			callback(block);
+		end
+	end
+end
+
 function KT_ObjectiveTrackerModuleMixin:GetExistingBlock(id, optTemplate)
 	local template = optTemplate or self.blockTemplate;
 
@@ -391,6 +405,8 @@ function KT_ObjectiveTrackerModuleMixin:InternalAddBlock(block)
 		return false;
 	end
 
+	block.nextBlock = nil;
+
 	local offsetY = self:AnchorBlock(block);
 	if self.lastBlock then
 		self.lastBlock.nextBlock = block;
@@ -450,6 +466,8 @@ function KT_ObjectiveTrackerModuleMixin:SetCollapsed(collapsed)
 	self.ContentsFrame:SetShown(not collapsed);
 	-- update the header
 	self.Header:SetCollapsed(collapsed);
+	-- cancel any slide
+	self:EndSlide();
 	-- update contents
 	self:MarkDirty();
 end
@@ -717,6 +735,18 @@ function KT_ObjectiveTrackerModuleMixin:CheckCachedBlocks(upcomingBlock)
 
 	-- All the cached blocks that could be added have been added by now
 	self.cacheIndex = numItems + 1;
+end
+
+function KT_ObjectiveTrackerModuleMixin:MatchesTag(tag)
+	return self:GetTag() == tag;
+end
+
+function KT_ObjectiveTrackerModuleMixin:GetTag()
+	return self.tag;
+end
+
+function KT_ObjectiveTrackerModuleMixin:AddTag(tag)
+	self.tag = tag;
 end
 
 -- *****************************************************************************************************

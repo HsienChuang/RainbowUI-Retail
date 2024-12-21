@@ -59,6 +59,18 @@ function core:init(event, ...)
     if event == "PLAYER_TARGET_CHANGED" then
         func:myTarget();
         func:Update_Colors();
+        if CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].AurasOnTarget then
+            if UnitExists("target") then
+                if data.myTarget.previous then
+                    func:HideAllAuras(data.myTarget.previous);
+                end
+                func:Update_Auras("target");
+            elseif data.myTarget.previous then
+                func:HideAllAuras(data.myTarget.previous);
+            else
+                func:HideAllAuras();
+            end
+        end
     end
 
     if event == "PLAYER_FLAGS_CHANGED" then
@@ -200,9 +212,7 @@ function core:init(event, ...)
     or event == "UNIT_SPELLCAST_CHANNEL_START"
     or event == "UNIT_SPELLCAST_DELAYED"
     or event == "UNIT_SPELLCAST_CHANNEL_UPDATE" then
-        local unit, _, spellID = ...;
         func:Castbar_Start(event, arg);
-        func:SpellCost(unit, spellID)
     end
 
     if event == "UNIT_SPELLCAST_STOP"

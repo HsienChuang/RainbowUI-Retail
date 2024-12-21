@@ -677,7 +677,7 @@ function BaganatorLiveCategoryLayoutMixin:OnHide()
 end
 
 function BaganatorLiveCategoryLayoutMixin:InformSettingChanged(setting)
-  if tIndexOf(ReflowSettings, setting) ~= nil or setting == addonTable.Config.Options.SORT_METHOD then
+  if tIndexOf(ReflowSettings, setting) ~= nil or setting == addonTable.Config.Options.SORT_METHOD or setting == addonTable.Config.Options.REVERSE_GROUPS_SORT_ORDER then
     self.reflow = true
   end
   if tIndexOf(UpdateTextureSettings, setting) ~= nil then
@@ -1023,7 +1023,7 @@ function BaganatorCachedCategoryLayoutMixin:OnHide()
 end
 
 function BaganatorCachedCategoryLayoutMixin:InformSettingChanged(setting)
-  if tIndexOf(ReflowSettings, setting) ~= nil or setting == addonTable.Config.Options.SORT_METHOD then
+  if tIndexOf(ReflowSettings, setting) ~= nil or setting == addonTable.Config.Options.SORT_METHOD or setting == addonTable.Config.Options.REVERSE_GROUPS_SORT_ORDER then
     self.reflow = true
   end
   if tIndexOf(UpdateTextureSettings, setting) ~= nil then
@@ -1187,6 +1187,7 @@ function BaganatorLiveGuildLayoutMixin:OnLoad()
   self.buttonPool = addonTable.ItemViewCommon.GetLiveGuildItemButtonPool(self)
   self.buttons = {}
   self.prevState = {}
+  self.layoutType = "live"
   self.SearchMonitor = CreateFrame("Frame", nil, self, "BaganatorGuildSearchLayoutMonitorTemplate")
 
   self:RegisterEvent("GUILDBANK_ITEM_LOCK_CHANGED")
@@ -1324,6 +1325,7 @@ function BaganatorLiveUnifiedGuildLayoutMixin:OnLoad()
   self.buttonPool = addonTable.ItemViewCommon.GetLiveGuildItemButtonPool(self)
   self.buttons = {}
   self.prevState = {}
+  self.layoutType = "live"
   self.SearchMonitor = CreateFrame("Frame", nil, self, "BaganatorGuildSearchLayoutMonitorTemplate")
 
   self:RegisterEvent("GUILDBANK_ITEM_LOCK_CHANGED")
@@ -1340,7 +1342,7 @@ end
 BaganatorLiveWarbandLayoutMixin = {}
 
 function BaganatorLiveWarbandLayoutMixin:OnLoad()
-  self.buttonPool = addonTable.ItemViewCommon.GetLiveWarbandItemButtonPool(self)
+  self.buttonPool = addonTable.ItemViewCommon.GetLiveItemButtonPool(self)
   self.indexFrame = CreateFrame("Frame", nil, self)
   self.buttons = {}
   self.waitingUpdate = true
@@ -1378,7 +1380,8 @@ function BaganatorLiveWarbandLayoutMixin:RequestContentRefresh()
 end
 
 function BaganatorLiveWarbandLayoutMixin:UpdateLockForItem(bagID, slotID)
-  if self.buttons[1] and bagID == self.buttons[1]:GetBankTabID() then
+  local myBagID = self.indexFrame:GetID()
+  if self.buttons[1] and bagID == myBagID then
     local itemButton = self.buttons[slotID]
     if itemButton then
       local info = C_Container.GetContainerItemInfo(bagID, slotID);
@@ -1454,7 +1457,6 @@ function BaganatorLiveWarbandLayoutMixin:ShowTab(tabIndex, indexes, rowWidth)
     self.indexFrame:SetID(bagID)
     for index, cacheData in ipairs(warbandData[tabIndex].slots) do
       local button = self.buttons[index]
-      button:SetBankTabID(bagID)
       if IsDifferentCachedData(button.BGR, cacheData) then
         button:SetItemDetails(cacheData)
       elseif refreshContent then

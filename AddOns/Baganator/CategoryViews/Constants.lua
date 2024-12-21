@@ -10,7 +10,6 @@ addonTable.CategoryViews.Constants = {
   DividerName = "----",
   DividerLabel = "——————",
   SectionEnd = "__end",
-  MinWidth = 400,
 
   GroupingState = {
     SplitStack = 1,
@@ -296,13 +295,11 @@ tAppendAll(addonTable.CategoryViews.Constants.DefaultCategories, {
     name = BAGANATOR_L_CATEGORY_RECENT_AUTO,
     auto = "recents",
     priorityOffset = 10000,
-    doNotAdd = true,
   },
   {
     key = "special_empty",
     name = BAGANATOR_L_EMPTY,
     emptySlots = true,
-    doNotAdd = true,
   },
 })
 
@@ -340,7 +337,6 @@ addonTable.Utilities.OnAddonLoaded("TradeSkillMaster", function()
     name = BAGANATOR_L_CATEGORY_TRADESKILLMASTER_AUTO,
     auto = "tradeskillmaster",
     priorityOffset = -15,
-    doNotAdd = true,
   }
   table.insert(addonTable.CategoryViews.Constants.DefaultCategories, spec)
   addonTable.CategoryViews.Constants.SourceToCategory[spec.source] = spec

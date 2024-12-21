@@ -1,6 +1,7 @@
 # Baganator
 
-## [522](https://github.com/Baganator/Baganator/tree/522) (2024-12-05)
-[Full Changelog](https://github.com/Baganator/Baganator/compare/521...522) 
+## [555](https://github.com/Baganator/Baganator/tree/555) (2024-12-18)
+[Full Changelog](https://github.com/Baganator/Baganator/compare/554...555) 
 
-- Categories: Restore performance optimisation  
+- Update LICENSE  
+- Code cleanup  

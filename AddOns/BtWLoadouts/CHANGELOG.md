@@ -1,3 +1,16 @@
+# v1.20.7
+
+- Updated for 11.0.7
+
+# v1.20.6
+
+- Fixed a issue showing some debug info
+
+# v1.20.5
+
+- Fixed error trying to get hero talents when unavailable
+- Fixed an issue trying to activate talent sets on characters below level 10
+
 # v1.20.4
 
 - Fixed an issue where Hero Talent trees would be considered active when there are still points available

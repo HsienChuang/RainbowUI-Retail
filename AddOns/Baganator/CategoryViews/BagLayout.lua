@@ -63,6 +63,13 @@ local function Prearrange(isLive, bagID, bag, bagType)
         if info.setInfo then
           info.guid = C_Item.GetItemGUID(location)
         end
+        if info.hasLoot and not info.isBound then
+          -- Ungroup lockboxes always
+          local classID, subClassID = select(6, C_Item.GetItemInfoInstant(info.itemID))
+          if classID == Enum.ItemClass.Miscellaneous and subClassID == 0 then
+            info.guid = C_Item.GetItemGUID(location)
+          end
+        end
       end
       info.bagID = bagID
       info.slotID = slotIndex
@@ -80,7 +87,7 @@ local function Prearrange(isLive, bagID, bag, bagType)
         end
         linkMap[info.itemLink] = info.keyLink
       end
-      info.key = addonTable.ItemViewCommon.Utilities.GetCategoryDataKeyNoCount(info) .. tostring(info.guid)
+      info.key = addonTable.ItemViewCommon.Utilities.GetCategoryDataKeyNoCount(info) .. info.guid
       table.insert(everything, info)
     else
       table.insert(emptySlots, {bagID = bagID, itemCount = 1, slotID = slotIndex, key = bagType, bagType = bagType, keyLink = bagType})
@@ -143,7 +150,9 @@ function addonTable.CategoryViews.BagLayoutMixin:SettingChanged(settingName)
     self.ItemsPreparation:ResetCaches()
     self.CategoryFilter:ResetCaches()
   end
-  self.composed = nil
+  if settingName ~= addonTable.Config.Options.CATEGORY_SECTION_TOGGLED then
+    self.composed = nil
+  end
 end
 
 -- Called in response to the ContentRefreshRequired event triggered when items
@@ -248,12 +257,10 @@ function addonTable.CategoryViews.BagLayoutMixin:Display(bagWidth, bagIndexes, b
         end
       end
       details.results = entries
-      details.any = #entries > 0 and not hidden[details.source] -- used to determine showing section headers
       if hidden[details.source] or sectionToggled[details.section] then
         for _, entry in ipairs(details.results) do
           table.insert(self.notShown, entry)
         end
-        details.results = {}
       end
     end
   end
@@ -261,10 +268,11 @@ function addonTable.CategoryViews.BagLayoutMixin:Display(bagWidth, bagIndexes, b
   local oldComposed = self.composed
   self.composed = composed
   if oldComposed then
-    local anyNew = false
+    local anyNew = #composed.details ~= #oldComposed.details
     for index, old in ipairs(oldComposed.details) do
       local current = composed.details[index]
-      if (current.source and (current.source ~= addonTable.CategoryViews.Constants.RecentItemsCategory)
+      if current.source ~= old.source or
+        (current.source and (current.source ~= addonTable.CategoryViews.Constants.RecentItemsCategory)
           and not old.emptySlots and old.oldLength and old.oldLength < #current.results) then
         anyNew = true
         break
@@ -272,22 +280,19 @@ function addonTable.CategoryViews.BagLayoutMixin:Display(bagWidth, bagIndexes, b
     end
     if not anyNew and not container.addToCategoryMode then
       local typeMap = {}
-      for index, bagType in ipairs(bagTypes) do
-        typeMap[bagIndexes[index]] = bagType
-      end
       for index, old in ipairs(oldComposed.details) do
         if old.results then
           local current = composed.details[index]
           current.oldLength = #current.results
           if #old.results > #current.results and not old.emptySlots and (#current.results > 0 or current.source ~= addonTable.CategoryViews.Constants.RecentItemsCategory) then
-            for index, info in ipairs(old.results) do
+            for index2, info in ipairs(old.results) do
               if #current.results >= #old.results then
                 break
               end
-              if info.bagID and info.slotID then
-                if not current.results[index] or current.results[index].key ~= info.key then
-                  table.insert(current.results, index, {bagID = info.bagID, slotID = info.slotID, isDummy = true, dummyType = "empty"})
-                end
+              local currentInfo = current.results[index2]
+              -- Check for missing items, and persist slot location/holes in the list
+              if info.bagID and info.slotID and (not currentInfo or (currentInfo.key ~= info.key or (info.slotID ~= currentInfo.slotID or info.bagID ~= currentInfo.bagID))) then
+                table.insert(current.results, index2, {bagID = info.bagID, slotID = info.slotID, isDummy = true, dummyType = "empty"})
               end
             end
           end
@@ -316,7 +321,11 @@ function addonTable.CategoryViews.BagLayoutMixin:Display(bagWidth, bagIndexes, b
       if details.results and #details.results > 0 then
         local layout = FindValueInTableIf(container.LiveLayouts, function(a) return a.sourceKey == details.sourceKey end)
         if layout then
-          layout:DeallocateUnusedButtons(details.results)
+          if hidden[details.source] or sectionToggled[details.section] then
+            layout:DeallocateUnusedButtons({})
+          else
+            layout:DeallocateUnusedButtons(details.results)
+          end
         end
       end
     end
@@ -360,7 +369,7 @@ function addonTable.CategoryViews.BagLayoutMixin:Display(bagWidth, bagIndexes, b
           local d = composed.details[i]
           if d.section ~= details.label then
             break
-          elseif d.type == "category" and d.any then
+          elseif d.type == "category" and #d.results > 0 and not hidden[d.source] then
             any = true
             break
           end
@@ -386,7 +395,7 @@ function addonTable.CategoryViews.BagLayoutMixin:Display(bagWidth, bagIndexes, b
         table.insert(layoutsShown, {}) -- {} causes the packing code to ignore this
       end
     elseif details.type == "category" then
-      if #details.results > 0 then
+      if #details.results > 0 and not hidden[details.source] and not sectionToggled[details.section] then
         local searchResults = details.results
         local layout = FindValueInTableIf(activeLayouts, function(a) return a.sourceKey == details.sourceKey end)
         if not layout then
@@ -415,7 +424,7 @@ function addonTable.CategoryViews.BagLayoutMixin:Display(bagWidth, bagIndexes, b
     addonTable.Utilities.DebugOutput("category group show", debugprofilestop() - start2)
   end
 
-  return addonTable.CategoryViews.PackSimple(layoutsShown, activeLabels, 0, 0, bagWidth, addonTable.CategoryViews.Constants.MinWidth)
+  return addonTable.CategoryViews.PackSimple(layoutsShown, activeLabels, 0, 0, bagWidth, addonTable.CategoryViews.Utilities.GetMinWidth(bagWidth))
 end
 
 function addonTable.CategoryViews.BagLayoutMixin:Layout(allBags, bagWidth, bagTypes, bagIndexes, sideSpacing, topSpacing, callback)

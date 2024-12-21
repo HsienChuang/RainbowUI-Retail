@@ -37,6 +37,7 @@ local expansionIDToText = {
   [7] = "BfA",
   [8] = "SL",
   [9] = "DF",
+  [10] = "TWW",
 }
 
 local function CacheSettings()
@@ -275,6 +276,15 @@ end, function(itemButton)
   return EquipmentSet
 end)
 
+Baganator.API.RegisterCornerWidget(BAGANATOR_L_EQUIPMENT_SET_ICON, "equipment_set_icon", function(EquipmentSetIcon, details)
+  EquipmentSetIcon:SetTexture(details.setInfo and details.setInfo[1].iconTexture or nil)
+  return details.setInfo and details.setInfo[1].iconTexture ~= nil
+end, function(itemButton)
+  local EquipmentSetIcon = itemButton:CreateTexture(nil, "ARTWORK")
+  EquipmentSetIcon:SetSize(15, 15)
+  return EquipmentSetIcon
+end)
+
 addonTable.Utilities.OnAddonLoaded("CanIMogIt", function()
   local function IsPet(itemID)
     local classID, subClassID = select(6, C_Item.GetItemInfoInstant(itemID))
@@ -334,7 +344,7 @@ addonTable.Utilities.OnAddonLoaded("BattlePetBreedID", function()
     end
     local speciesID, level, rarity, maxHealth, power, speed = BattlePetToolTip_UnpackBattlePetLink(details.itemLink)
     local breednum = BPBID_Internal.CalculateBreedID(speciesID, rarity + 1, level, maxHealth, power, speed, false, false)
-    local name = BPBID_Internal.RetrieveBreedName(breednum):gsub("/", "")
+    local name = tostring(BPBID_Internal.RetrieveBreedName(breednum)):gsub("/", "")
     Breed:SetText(name)
     if iconSettings.useQualityColors then
       local color = qualityColors[details.quality]

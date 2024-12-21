@@ -1,7 +1,6 @@
 # Syndicator
 
-## [139](https://github.com/Baganator/Syndicator/tree/139) (2024-11-29)
-[Full Changelog](https://github.com/Baganator/Syndicator/compare/138...139) 
+## [144](https://github.com/Baganator/Syndicator/tree/144) (2024-12-18)
+[Full Changelog](https://github.com/Baganator/Syndicator/compare/143...144) 
 
-- Split WuE and just Warbound tooltip constants properly  
-- Retail: Ignore undiscovered currencies when caching currency data for character  
+- Update LICENSE  

@@ -89,7 +89,7 @@ function PGF.AddRatingInfo(self, searchResultInfo)
             ratingColor = C_ChallengeMode.GetDungeonScoreRarityColor(rating) or ratingColor
         end
         if searchResultInfo.leaderDungeonScoreInfo and searchResultInfo.leaderDungeonScoreInfo.bestRunLevel > 0 then
-            -- extraText = "+" .. searchResultInfo.leaderDungeonScoreInfo.bestRunLevel -- 暫時修正，不顯示層數 
+            extraText = "+" .. searchResultInfo.leaderDungeonScoreInfo.bestRunLevel
             if not searchResultInfo.leaderDungeonScoreInfo.finishedSuccess then
                 extraTextColor = { r = 0.6, g = 0.6, b = 0.6 }
             end

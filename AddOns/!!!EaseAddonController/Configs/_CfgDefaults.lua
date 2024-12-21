@@ -250,7 +250,7 @@ D["AutoPotion"] = {
     },
 	{
 		type = "text",
-        text = "使用巨集: 載入插件後，從 Esc > 巨集設定，將名稱為 AutoPotion 巨集拉到快捷列上，然後重新載入介面。\n\n使用快速鍵: 從 Esc > 選項 > 按鍵綁定 > 插件 > 使用巨集 AutoPotion，設定一個按鍵後便能使用。\n\n當背包中有相關物品但巨集無效時，只要重新載入介面即可。\n",       
+        text = "使用巨集: 載入插件後，從 Esc > 巨集設定，將名稱為 '治療' 巨集拉到快捷列上，然後重新載入介面。\n\n使用快速鍵: 從 Esc > 選項 > 按鍵綁定 > 插件 > 使用治療巨集，設定一個按鍵後便能使用。\n\n當背包中有相關物品但巨集無效時，只要重新載入介面即可。\n",       
 	},
 };
 D["Baganator"] = {
@@ -792,7 +792,7 @@ D["Details"] = {
 };
 D["DFFriendlyNameplates"] = {
     defaultEnable = 0,
-	tags = { "ENHANCEMENT" },
+	tags = { "UNITFRAME" },
 	title = "友善友方名條",
 	desc = "讓你可以設定在副本內開啟友方名條時，是否只要顯示隊友的名字，不顯示隊友的血條和施法條，讓畫面不會那麼混亂。``還可以設定隊友名字的字體、大小...等更多自訂選項，進入副本不需要重新載入介面。``|cffFF2D2D特別注意：可能會遇到某些設定選項會沒有作用。如果使用此插件沒有效果時，可以改用備用的插件 '友方只顯示名字' 。`(目前還不清楚為何有些角色會沒有效果)``請勿和 '友方只顯示名字' 插件同時載入使用，選擇其中一個使用即可。``使用威力血條時，要在副本內顯示隊友名字，請在威力血條設定>自動>隱藏友方血條，取消打勾。|r`",
 	icon = "Interface\\Icons\\boss_odunrunes_green",
@@ -1408,7 +1408,7 @@ D["KeyMaster"] = {
 D["KeystoneLoot"] = {
     defaultEnable = 0,
 	tags = { "ITEM" },
-	title = "裝備查詢",
+	title = "職業適合裝備查詢",
 	desc = "方便尋找在 M+ 地城、團隊和寶庫可取得的裝備，可以依照職業、專精、部位和物品等級來找裝備，還能加入我的最愛。`",
     {
         text = "打開主視窗",
@@ -1416,7 +1416,7 @@ D["KeystoneLoot"] = {
     },
 	{
 		type = "text",
-        text = "點小地圖按鈕的 '裝備查詢' 按鈕也可以打開主視窗。",
+        text = "點小地圖按鈕的 '職業適合裝備查詢' 按鈕也可以打開主視窗。",
     },
 };
 D["Krowi_ExtendedVendorUI"] = {
@@ -1531,7 +1531,7 @@ D["ls_Toasts"] = {
 };
 D["LuckyAres"] = {
     defaultEnable = 0,
-	tags = { "ENHANCEMENT" },
+	tags = { "UNITFRAME" },
 	title = "友方只顯示名字 (備用)",
 	desc = "在副本內開啟友方血條時，只會顯示隊友的名字，不會顯示隊友的血條和施法條，讓畫面不會那麼混亂。``|cffFF2D2D特別注意：每次進入副本後都需要手動重新載入介面一次，才會有效果。``如果使用 '友善友方名條' 插件有效果，建議關閉這個插件改用 '友善友方名條'。不需要每次重新載入介面，還可以調整字體、大小...等。``請勿和 '友善友方名條' 插件同時載入使用。``使用威力血條時，要在副本內顯示隊友名字，請在威力血條設定>自動>隱藏友方血條，取消打勾。|r`",
 	icon = "Interface\\Icons\\boss_odunrunes_green",
@@ -2271,9 +2271,9 @@ D["SilverDragon"] = {
 };
 D["SilverPlateTweaks"] = {
 	defaultEnable = 1,
-	tags = { "ENHANCEMENT" },
+	tags = { "UNITFRAME" },
 	title = "血條距離微調",
-	desc = "自動調整血條的視野距離 (可以看見距離多遠範圍內的血條) 和堆疊時的間距。``|cffFF2D2D若要手動調整血條距離時 (從 Esc > 介面 > 插件 > 進階)，請關閉這個插件。|r`",
+	desc = "自動調整血條的視野距離 (可以看見距離多遠範圍內的血條) 和堆疊時的間距，以及一些其他的 CVar 遊戲參數。``|cffFF2D2D若要手動調整血條距離時 (從 Esc > 介面 > 插件 > 進階)，請關閉這個插件。|r`",
 	icon = "Interface\\Icons\\spell_misc_hellifrepvpcombatmorale",
 	img = true,
 };

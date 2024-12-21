@@ -25,7 +25,8 @@ core.data = {
     isCata    = WOW_PROJECT_ID == WOW_PROJECT_CATACLYSM_CLASSIC,
     cvars = {},
     classBarHeight = 0,
-    hooks = {}
+    hooks = {},
+    tooltip = {},
 };
 
 local func = core.func;
@@ -367,6 +368,23 @@ function func:TrimEmptySpaces(text)
 end
 
 ----------------------------------------
+-- Abbreviate numbers
+----------------------------------------
+function func:AbbreviateNumbers(num)
+    if not num or num == 0 then
+        return nil;
+    end
+
+	if num >= 1e8 then
+        num = string.format("%.2f億", num / 1e8)
+    elseif num >= 1e4 then
+        num = string.format("%.0f萬", num / 1e4)
+    end
+
+    return num;
+end
+
+----------------------------------------
 -- Format time
 ----------------------------------------
 function func:formatTime(value)
@@ -414,7 +432,7 @@ function func:InteractIcon(nameplate)
     if nameplate and data.isRetail then
         local unitFrame = nameplate.unitFrame;
         local interactIcon = nameplate.UnitFrame and nameplate.UnitFrame.SoftTargetFrame and nameplate.UnitFrame.SoftTargetFrame.Icon;
-        local auras = unitFrame and unitFrame.buffs["auras"] and (unitFrame.buffs["auras"][1] or unitFrame.debuffs["auras"][1]);
+        local auras = unitFrame and unitFrame.auras and unitFrame.auras.list and unitFrame.auras.list[1];
         local resourceOnTarget = data.cvars.nameplateResourceOnTarget;
 
         if interactIcon then
@@ -701,20 +719,6 @@ end
 ----------------------------------------
 -- Update health
 ----------------------------------------
-local function AbbreviateNumbers(value)
-	local abs_value = (value > 0 and value) or (-1 * value)
-
-    if abs_value >= 1e8 then
-      return format("%.2f億", value / 1e8)
-    elseif abs_value >= 1e4 then
-      return format("%.0f萬", value / 1e4)
-    -- elseif abs_value >= 1e3 then
-    --  return format("%.1f千", value / 1e3)
-    else
-      return format("%i", value)
-    end
-end
-
 function func:Update_Health(unit)
     if unit then
         local healthMax = UnitHealthMax(unit);
@@ -723,7 +727,7 @@ function func:Update_Health(unit)
         local percentageAsMainValue = CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].PercentageAsMainValue and CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NumericValue and CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].Percentage;
         local player = UnitIsPlayer(unit);
         local otherPlayersPet = UnitIsOtherPlayersPet(unit);
-        local hp = AbbreviateNumbers(health);
+        local hp = func:AbbreviateNumbers(health);
         local showSecondary = true;
 
         if UnitIsUnit(unit, "player") then
@@ -743,7 +747,7 @@ function func:Update_Health(unit)
                 nameplate.healthSecondary:SetShown(CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NumericValue and CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].Percentage);
 
                 -- Total health
-                data.nameplate.healthTotal:SetText(AbbreviateNumbers(healthMax));
+                data.nameplate.healthTotal:SetText(func:AbbreviateNumbers(healthMax));
 
                 -- Updating Health bar
                 nameplate.healthbar:SetMinMaxValues(0, healthMax);
@@ -758,7 +762,7 @@ function func:Update_Health(unit)
             if data.isClassic then
                 if (not player and not otherPlayersPet) or UnitPlayerOrPetInParty(unit) then
                     showSecondary = true;
-                    hp = AbbreviateNumbers(health);
+                    hp = func:AbbreviateNumbers(health);
                 else
                     showSecondary = false ;
                     hp = health .. "%";
@@ -818,13 +822,12 @@ end
 -- Heal prediction
 ----------------------------------------
 function func:PredictHeal(unit)
-    local healthbar, prediction, missing, heal, predictionSpark;
+    local healthbar, prediction, missing, heal;
 
     if unit then
         if unit == "player" then
             healthbar = data.nameplate.healthbar;
             prediction = data.nameplate.healPrediction;
-            predictionSpark = data.nameplate.healPredictionSpark;
             missing = data.nameplate.missing;
             heal = data.nameplate.heal;
         else
@@ -833,7 +836,6 @@ function func:PredictHeal(unit)
             if nameplate then
                 healthbar = nameplate.unitFrame.healthbar;
                 prediction = nameplate.unitFrame.healthbar.healPrediction;
-                predictionSpark = nameplate.unitFrame.healthbar.healPredictionSpark;
                 missing = nameplate.unitFrame.healthbar.healPrediction.missing;
                 heal = nameplate.unitFrame.healthbar.healPrediction.heal;
             end
@@ -841,7 +843,7 @@ function func:PredictHeal(unit)
 
         local healValue = UnitGetIncomingHeals(unit) or heal;
 
-        if healValue and healValue > 0  and healthbar then
+        if healValue and healValue > 0 and healthbar then
             missing = UnitHealthMax(unit) - UnitHealth(unit);
             heal = healValue;
 
@@ -852,15 +854,20 @@ function func:PredictHeal(unit)
                 newValue = missingValue;
             end
 
+            local scaleToggle = false;
+            if data.isClassic and not UnitIsUnit("player", unit) and not (UnitInParty(unit) or UnitInRaid(unit) or UnitPlayerOrPetInParty(unit)) and (UnitIsOtherPlayersPet(unit) or UnitIsPlayer(unit)) then
+                newValue = missingValue;
+                scaleToggle = true;
+            end
+
             prediction:SetWidth(newValue);
             prediction:SetShown(newValue > 0);
-            predictionSpark:SetShown(newValue > 0);
+
+            prediction.animationGroupScale:SetPlaying(scaleToggle);
+            prediction.animationGroupAlpha:Play();
         else
             if prediction then
                 prediction:Hide();
-            end
-            if predictionSpark then
-                predictionSpark:Hide();
             end
         end
 
@@ -873,6 +880,8 @@ end
 -- Update power
 ----------------------------------------
 function func:Update_Power(unit)
+    local CFG = CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile];
+
     if unit then
         if unit == "player" then
             local nameplate = data.nameplate;
@@ -883,7 +892,12 @@ function func:Update_Power(unit)
             local classID = select(3, UnitClass("player"));
             local powerPercent = string.format("%.0f", (power/powerMax)*100) .. "%";
 
+            data.nameplate.prevPowerValue = nameplate.powerbar:GetValue();
+            data.nameplate.prevPowerType = nameplate.powerbar.powerType or powerType;
+
             if nameplate then
+                nameplate.powerbar.powerType = powerType;
+
                 if color then
                     nameplate.powerbar:SetStatusBarColor(color.r, color.g, color.b);
                 end
@@ -892,21 +906,21 @@ function func:Update_Power(unit)
                 nameplate.powerbar:SetValue(power);
 
                 if powerType == 0 then
-                    if CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].PercentageAsMainValue and CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NumericValue and CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].Percentage then
+                    if CFG.PercentageAsMainValue and CFG.NumericValue and CFG.Percentage then
                         nameplate.powerMain:SetText(powerPercent);
-                        nameplate.power:SetText(AbbreviateNumbers(power));
+                        nameplate.power:SetText(func:AbbreviateNumbers(power));
                         nameplate.power:Show();
                         nameplate.powerMain:Show();
-                    elseif CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NumericValue and CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].Percentage then
-                        nameplate.powerMain:SetText(AbbreviateNumbers(power));
+                    elseif CFG.NumericValue and CFG.Percentage then
+                        nameplate.powerMain:SetText(func:AbbreviateNumbers(power));
                         nameplate.power:SetText(powerPercent);
                         nameplate.power:Show();
                         nameplate.powerMain:Show();
-                    elseif CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NumericValue then
-                        nameplate.powerMain:SetText(AbbreviateNumbers(power));
+                    elseif CFG.NumericValue then
+                        nameplate.powerMain:SetText(func:AbbreviateNumbers(power));
                         nameplate.powerMain:SetShown(powerType == 0);
                         nameplate.power:Hide();
-                    elseif CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].Percentage then
+                    elseif CFG.Percentage then
                         nameplate.powerMain:SetText(powerPercent);
                         nameplate.powerMain:Show();
                         nameplate.power:Hide();
@@ -919,7 +933,7 @@ function func:Update_Power(unit)
                     nameplate.power:Hide();
                 end
 
-                data.nameplate.powerTotal:SetText(AbbreviateNumbers(powerMax));
+                data.nameplate.powerTotal:SetText(func:AbbreviateNumbers(powerMax));
 
                 -- Toggling spark
                 func:ToggleSpark(power, powerMax, nameplate.powerbarSpark);
@@ -961,7 +975,7 @@ function func:Update_Power(unit)
 
                     unitFrame.powerbar.statusbar:SetMinMaxValues(0, powerMax);
                     unitFrame.powerbar.statusbar:SetValue(power);
-                    unitFrame.powerbar:SetShown(CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].Powerbar);
+                    unitFrame.powerbar:SetShown(CFG.Powerbar);
                     unitFrame.powerbar.border:Show();
                 else -- Powerbar is hidden
                     unitFrame.powerbar:Hide();
@@ -1081,7 +1095,7 @@ function func:Update_ClassPower(unit, var1)
                         local function work(frame)
                             if hover and keyCheck() then
                                 GameTooltip:SetOwner(frame, "ANCHOR_BOTTOMLEFT", 0, -2);
-                                GameTooltip:SetTotem(i)
+                                GameTooltip:SetTotem(i);
                                 GameTooltip:Show();
                             end
                         end
@@ -1229,50 +1243,6 @@ function func:ToggleSpark(value, valueMax, spark)
 end
 
 ----------------------------------------
--- Spell cost
-----------------------------------------
-function func:SpellCost(unit, spellID)
-    --[[if not data.isRetail then
-        if UnitIsUnit(unit, "player") then
-            local costTable = GetSpellPowerCost(spellID);
-
-            local function cost(cost, costType)
-                local powerMax = UnitPowerMax("player", costType);
-
-                if cost > 0 then
-                    data.nameplate.powerbarCost:SetWidth(cost / powerMax * data.nameplate.powerbar:GetWidth());
-                    data.nameplate.powerbarCost:Show();
-                    data.nameplate.powerbarCostSpark:Show();
-                end
-            end
-
-            if next(costTable) ~= nil then
-                for k,v in pairs(costTable) do
-                    for k,v in pairs(v) do
-                        --print(k,v)
-                    end
-                end
-            end
-
-            if next(costTable) ~= nil then
-                if type(costTable[1]["cost"]) == "table" then
-                    local costType = costTable[1].cost[1].type;
-                    local cost2Type = costTable[1].cost[2].type;
-
-                    if costType == 0 or costType == 1 or costType == 3 then print("1")
-                        cost(costTable[1].cost[1].cost, costType);
-                    elseif cost2Type == 0 or cost2Type == 1 or cost2Type == 3 then print("2")
-                        cost(costTable[1].cost[2].cost, cost2Type);
-                    end
-                else
-                    cost(costTable[1].cost, costTable[1].type);
-                end
-            end
-        end
-    end]]
-end
-
-----------------------------------------
 -- Update portrait
 ----------------------------------------
 function func:Update_Portrait(unit)
@@ -1361,9 +1331,53 @@ function func:Update_Guild(unit)
 end
 
 ----------------------------------------
+-- Names only
+----------------------------------------
+function func:NamesOnly(unit)
+    local CFG = CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile];
+    local canAttack = UnitCanAttack("player", unit);
+    local isTarget = UnitIsUnit("target", unit);
+    local isTotem = UnitCreatureType(unit) == "Totem";
+    local isPlayer = UnitIsPlayer(unit);
+    local isPet = UnitIsOtherPlayersPet(unit);
+
+    if isTarget then
+        return false;
+    else
+        if isPlayer then
+            if canAttack then
+                return CFG.NamesOnlyEnemyPlayers;
+            else
+                return CFG.NamesOnlyFriendlyPlayers;
+            end
+        elseif isPet then
+            if canAttack then
+                return CFG.NamesOnlyEnemyPets;
+            else
+                return CFG.NamesOnlyFriendlyPets;
+            end
+        elseif isTotem then
+            if canAttack then
+                return CFG.NamesOnlyEnemyTotems;
+            else
+                return CFG.NamesOnlyFriendlyTotems;
+            end
+        else
+            if canAttack then
+                return CFG.NamesOnlyEnemyNPC;
+            else
+                return CFG.NamesOnlyFriendlyNPC;
+            end
+        end
+    end
+end
+
+----------------------------------------
 -- Update name and guild positions
 ----------------------------------------
 function func:Update_NameAndGuildPositions(nameplate, hook)
+    local CFG = CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile];
+
     if nameplate then
         local unit = nameplate.namePlateUnitToken;
 
@@ -1371,17 +1385,17 @@ function func:Update_NameAndGuildPositions(nameplate, hook)
             local unitFrame = nameplate.unitFrame;
 
             local function work()
-                local portrait = CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].Portrait and 0 or -9;
-                local level = CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].ShowLevel and 0 or 9;
+                local portrait = CFG.Portrait and 0 or -9;
+                local level = CFG.ShowLevel and 0 or 9;
                 local powerbarToggle = unitFrame.unit and UnitPower(unitFrame.unit) and UnitPowerMax(unitFrame.unit) > 0;
                 local DefaultNameY = (unitFrame.threatPercentage:IsShown() or unitFrame.guild:IsShown()) and 0
-                    or (CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].ShowGuildName or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].ThreatPercentage) and not powerbarToggle and -6
-                    or (CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].ShowGuildName or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].ThreatPercentage) and powerbarToggle and -4
+                    or (CFG.ShowGuildName or CFG.ThreatPercentage) and not powerbarToggle and -6
+                    or (CFG.ShowGuildName or CFG.ThreatPercentage) and powerbarToggle and -4
                     or not powerbarToggle and -2
                     or powerbarToggle and 0 or -6;
                 local x = portrait + level;
                 local y = unitFrame.threatPercentage:IsShown() and -17 or -8;
-                local anchor = CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].ShowGuildName and unitFrame.guild:IsShown() and unitFrame.guild or unitFrame.name;
+                local anchor = CFG.ShowGuildName and unitFrame.guild:IsShown() and unitFrame.guild or unitFrame.name;
 
                 nameplate.UnitFrame.name:ClearAllPoints();
                 nameplate.UnitFrame.name:SetPoint("top", 0, DefaultNameY);
@@ -1389,22 +1403,13 @@ function func:Update_NameAndGuildPositions(nameplate, hook)
                 unitFrame.healthbar:SetPoint("top", anchor, "bottom", x, y);
             end
 
-            local canAttack = UnitCanAttack("player", unit);
-            local showParent = UnitIsUnit("target", unit)
-                or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnly == 1
-                or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnly == 2 and canAttack
-                or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnly == 3 and not canAttack
-                or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnly == 4 and false
+            local nameOnly = func:NamesOnly(unit);
 
-            if not showParent then
-                local UnitIsPlayerOrPlayersPet = UnitIsPlayer(unit) or UnitIsOtherPlayersPet(unit);
-                local exclude =
-                       CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnlyExcludeNPCs == 2 and not UnitIsPlayerOrPlayersPet
-                    or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnlyExcludeNPCs == 3 and canAttack and not UnitIsPlayerOrPlayersPet
-                    or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnlyExcludeFriends and func:isFriend(unit)
-                    or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnlyExcludeGuild and IsGuildMember(unit)
-                    or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnlyExcludeParty and func:UnitInYourParty(unit)
-                    or CFG_Account_ClassicPlatesPlus.Profiles[CFG_ClassicPlatesPlus.Profile].NamesOnlyExcludeRaid and UnitPlayerOrPetInRaid(unit)
+            if nameOnly then
+                local exclude = CFG.NamesOnlyExcludeFriends and func:isFriend(unit)
+                    or CFG.NamesOnlyExcludeGuild and IsGuildMember(unit)
+                    or CFG.NamesOnlyExcludeParty and func:UnitInYourParty(unit)
+                    or CFG.NamesOnlyExcludeRaid and UnitPlayerOrPetInRaid(unit)
 
                 if not exclude then
                     nameplate.UnitFrame.name:ClearAllPoints();

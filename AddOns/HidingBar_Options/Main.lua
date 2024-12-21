@@ -464,7 +464,7 @@ barPanelScroll.child:SetSize(1, 1)
 barPanelScroll:SetScrollChild(barPanelScroll.child)
 
 -- BAR COMBOBOX
-local barCombobox = lsfdd:CreateButton(barPanelScroll.child, 120)
+local barCombobox = lsfdd:CreateModernButton(barPanelScroll.child, 120)
 barCombobox:SetPoint("TOPLEFT", 3, -6)
 
 barCombobox:ddSetInitFunc(function(self)
@@ -885,7 +885,7 @@ expandToText:SetWidth(114)
 expandToText:SetText(L["Expand to"])
 
 -- EXPAND TO COMBOBOX
-local expandToCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
+local expandToCombobox = lsfdd:CreateModernButton(main.barSettingsPanel, 120)
 expandToCombobox:SetPoint("TOPRIGHT", expandToText, "BOTTOMRIGHT", 2, -5)
 expandToCombobox.texts = {[0] = L["Right / Bottom"], L["Left / Top"], L["Both direction"]}
 
@@ -911,7 +911,7 @@ orientationText:SetPoint("TOPLEFT", 8, -20)
 orientationText:SetText(L["Orientation"])
 
 -- ORIENTATION COMBOBOX
-local orientationCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
+local orientationCombobox = lsfdd:CreateModernButton(main.barSettingsPanel, 120)
 orientationCombobox:SetPoint("LEFT", orientationText, "RIGHT", 3, 0)
 orientationCombobox.texts = {[0] = L["Auto"], L["Horizontal"], L["Vertical"]}
 
@@ -938,7 +938,7 @@ fsText:SetPoint("LEFT", orientationCombobox, "RIGHT", 10, 0)
 fsText:SetText(L["Strata of panel"])
 
 -- FRAME STRATA COMBOBOX
-local fsCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
+local fsCombobox = lsfdd:CreateModernButton(main.barSettingsPanel, 120)
 fsCombobox:SetPoint("LEFT", fsText, "RIGHT", 3, 0)
 fsCombobox.texts = {[0] = "MEDIUM", "HIGH", "DIALOG", "FULLSCREEN", "FULLSCREEN_DIALOG", "TOOLTIP"}
 
@@ -978,7 +978,7 @@ hideHandlerText:SetPoint("TOPLEFT", lock, "BOTTOMLEFT", 0, -10)
 hideHandlerText:SetText(L["Hide by"])
 
 -- HIDE HANDLER
-local hideHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
+local hideHandlerCombobox = lsfdd:CreateModernButton(main.barSettingsPanel, 120)
 hideHandlerCombobox:SetPoint("LEFT", hideHandlerText, "RIGHT", 3, 0)
 hideHandlerCombobox.texts = {[0] = L["Timer"], L["Clicking on a free place"], L["Timer or clicking on a free place"], L["Clicking on a line or button"]}
 
@@ -1015,7 +1015,7 @@ showHandlerText:SetPoint("TOPLEFT", hideHandlerText, "BOTTOMLEFT", 0, -margin)
 showHandlerText:SetText(L["Show on"])
 
 -- SHOW HANDLER
-local showHandlerCombobox = lsfdd:CreateButton(main.barSettingsPanel, 120)
+local showHandlerCombobox = lsfdd:CreateModernButton(main.barSettingsPanel, 120)
 showHandlerCombobox:SetPoint("LEFT", showHandlerText, "RIGHT", 3, 0)
 showHandlerCombobox.texts = {[0] = L["Hover"], L["Click"], L["Hover or Click"], L["Allways"]}
 
@@ -1101,7 +1101,7 @@ bgText:SetPoint("TOPLEFT", 8, -20)
 bgText:SetText(L["Background"])
 
 -- BACKGROUND COMBOBOX
-local bgCombobox = lsfdd:CreateMediaBackgroundButton(main.displayPanel, 120)
+local bgCombobox = lsfdd:CreateMediaBackgroundModernButton(main.displayPanel, 120)
 bgCombobox:SetPoint("LEFT", bgText, "RIGHT", 3, 0)
 bgCombobox:ddSetOnSelectedFunc(function(value)
 	if value == "None" then value = false end
@@ -1129,7 +1129,7 @@ borderText:SetPoint("TOPLEFT", bgText, "BOTTOMLEFT", 0, -margin)
 borderText:SetText(L["Border"])
 
 -- BORDER COMBOBOX
-local borderCombobox = lsfdd:CreateMediaBorderButton(main.displayPanel, 120)
+local borderCombobox = lsfdd:CreateMediaBorderModernButton(main.displayPanel, 120)
 borderCombobox:SetPoint("LEFT", borderText, "RIGHT", 3, 0)
 borderCombobox:ddSetOnSelectedFunc(function(value)
 	if value == "None" then value = false end
@@ -1179,7 +1179,7 @@ lineText:SetPoint("TOPLEFT", borderSize, "BOTTOMLEFT", 0, -margin)
 lineText:SetText(L["Line"])
 
 -- LINE TEXTURE COMBOBOX
-local lineTextureCombobox = lsfdd:CreateMediaStatusbarButton(main.displayPanel, 120)
+local lineTextureCombobox = lsfdd:CreateMediaStatusbarModernButton(main.displayPanel, 120)
 lineTextureCombobox:SetPoint("LEFT", lineText, "RIGHT", 3, 0)
 lineTextureCombobox:ddSetOnSelectedFunc(function(value)
 	main.barFrame:setLineTexture(value)
@@ -1228,7 +1228,7 @@ lineBorderText:SetPoint("TOPLEFT", lineText, "BOTTOMLEFT", 0, -margin)
 lineBorderText:SetText(L["Line Border"])
 
 -- BORDER COMBOBOX
-local lineBorderCombobox = lsfdd:CreateMediaBorderButton(main.displayPanel, 120)
+local lineBorderCombobox = lsfdd:CreateMediaBorderModernButton(main.displayPanel, 120)
 lineBorderCombobox:SetPoint("LEFT", lineBorderText, "RIGHT", 3, 0)
 lineBorderCombobox:ddSetOnSelectedFunc(function(value)
 	if value == "None" then value = false end
@@ -1356,7 +1356,7 @@ mbtnPostionText:SetPoint("TOPLEFT", rangeBetweenBtns, "BOTTOMLEFT", 0, -margin)
 mbtnPostionText:SetText(L["Position of minimap buttons"])
 
 -- POSITION OF MINIMAP BUTTON
-local mbtnPostionCombobox = lsfdd:CreateButton(main.buttonSettingsPanel, 120)
+local mbtnPostionCombobox = lsfdd:CreateModernButton(main.buttonSettingsPanel, 120)
 mbtnPostionCombobox:SetPoint("LEFT", mbtnPostionText, "RIGHT", 3, 0)
 mbtnPostionCombobox.texts = {[0] = L["A new line"], L["Followed"], L["Mixed"]}
 
@@ -1446,7 +1446,7 @@ interceptTooltip:SetScript("OnClick", function(btn)
 end)
 
 -- TOOLTIP POSITION
-main.tooltipPositionCombobox = lsfdd:CreateButton(main.buttonSettingsPanel, 120)
+main.tooltipPositionCombobox = lsfdd:CreateModernButton(main.buttonSettingsPanel, 120)
 main.tooltipPositionCombobox:SetPoint("LEFT", interceptTooltip.Text, "RIGHT", 3, 0)
 main.tooltipPositionCombobox.texts = {
 	[0] = L["Auto"],
@@ -1495,11 +1495,12 @@ local function updateBarTypePosition()
 	main.ombIcon:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.ombIconCustom:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.ombShowToCombobox:SetEnabled(main.bConfig.barTypePosition == 2)
-	main.ombSize:setEnabled(main.bConfig.barTypePosition == 2)
+	main.ombSize:setEnabled(main.bConfig.barTypePosition == 2 and not main.bConfig.omb.canGrabbed)
 	main.distanceFromButtonToBar:setEnabled(main.bConfig.barTypePosition == 2)
 	main.ombBarDisplacement:setEnabled(main.bConfig.barTypePosition == 2)
 	main.canGrabbed:SetEnabled(main.bConfig.barTypePosition == 2)
 	main.buttonHide:SetEnabled(main.bConfig.barTypePosition == 2 and not main.bConfig.omb.canGrabbed)
+	main.ombFade:setEnabled(main.bConfig.barTypePosition == 2 and not main.bConfig.omb.canGrabbed)
 end
 
 -- BAR ATTACHED TO THE SIDE
@@ -1554,7 +1555,7 @@ main.freeMove:SetScript("OnClick", function()
 end)
 
 -- HIDE TO
-main.hideToCombobox = lsfdd:CreateButton(main.positionBarPanel, 120)
+main.hideToCombobox = lsfdd:CreateModernButton(main.positionBarPanel, 120)
 main.hideToCombobox:SetPoint("TOPLEFT", main.freeMove, "BOTTOMLEFT", 23, -3)
 main.hideToCombobox.texts = {
 	left = L["Hiding to left"],
@@ -1694,7 +1695,7 @@ main.ombIconCustom:SetScript("OnEnable", function(editBox)
 end)
 
 -- MINIMAP BUTTON SHOW TO
-main.ombShowToCombobox = lsfdd:CreateButton(main.positionBarPanel, 120)
+main.ombShowToCombobox = lsfdd:CreateModernButton(main.positionBarPanel, 120)
 main.ombShowToCombobox:SetPoint("TOPLEFT", main.ombIcon, "BOTTOMLEFT", -1, -10)
 main.ombShowToCombobox.texts = {
 	right = L["Show to left"],
@@ -1774,7 +1775,10 @@ main.canGrabbed.tooltipText = L["If a suitable bar exists then the button will b
 main.canGrabbed:SetScript("OnClick", function(btn)
 	local checked = btn:GetChecked()
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
+	main.ombSize:setEnabled(not checked)
 	main.buttonHide:SetEnabled(not checked)
+	main.ombFade:setEnabled(not checked)
+
 	local omb = main.barFrame.omb
 	main.bConfig.omb.canGrabbed = checked
 	if checked then
@@ -1806,6 +1810,19 @@ main.buttonHide:SetScript("OnClick", function(btn)
 	PlaySound(checked and SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON or SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF)
 	main.bConfig.ombHide = checked
 	main.barFrame:setBarTypePosition()
+end)
+
+
+-- THE BUTTON FADE
+main.ombFade = CreateFrame("FRAME", nil, main.positionBarPanel, "HidingBarAddonSliderFrameTemplate")
+main.ombFade:SetPoint("LEFT", main.buttonHide.Text, "RIGHT", 20, 5)
+main.ombFade:SetPoint("RIGHT", -10, 0)
+main.ombFade:setMinMax(0, 1)
+main.ombFade:setStep(.05)
+main.ombFade:setText(L["Opacity"])
+main.ombFade:setMaxLetters(4)
+main.ombFade:setOnChanged(function(frame, value)
+	main.barFrame:setOMBFade(value)
 end)
 
 
@@ -2280,6 +2297,7 @@ function main:setBar(bar)
 		self.ombBarDisplacement:setValue(self.bConfig.omb.barDisplacement)
 		self.canGrabbed:SetChecked(self.bConfig.omb.canGrabbed)
 		self.buttonHide:SetChecked(self.bConfig.ombHide)
+		self.ombFade:setValue(self.bConfig.omb.fadeOpacity)
 
 		updateBarTypePosition()
 	end

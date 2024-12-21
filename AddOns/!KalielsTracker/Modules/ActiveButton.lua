@@ -4,8 +4,10 @@
 ---
 --- This file is part of addon Kaliel's Tracker.
 
+---@type KT
 local addonName, KT = ...
-local M = KT:NewModule(addonName.."_ActiveButton")
+
+local M = KT:NewModule("ActiveButton")
 KT.ActiveButton = M
 
 local _DBG = function(...) if _DBG then _DBG("KT", ...) end end
@@ -64,6 +66,24 @@ local function ActiveFrame_SetPosition()
 	local point, relativeTo, relativePoint, xOfs, yOfs = "BOTTOM", UIParent, "BOTTOM", 0, 285
 	if db.qiActiveButtonPosition then
 		point, relativeTo, relativePoint, xOfs, yOfs = unpack(db.qiActiveButtonPosition)
+		if point ~= "CENTER" then
+			if point ~= "TOP" and point ~= "BOTTOM" then
+				local xOfsMod = activeFrame:GetWidth() / 2
+				if point == "TOPLEFT" or point == "BOTTOMLEFT" or point == "LEFT" then
+					xOfs = max(xOfs, -1 * xOfsMod)
+				else
+					xOfs = min(xOfs, xOfsMod)
+				end
+			end
+			if point ~= "LEFT" and point ~= "RIGHT" then
+				local yOfsMod = activeFrame:GetHeight() / 2
+				if point == "TOPLEFT" or point == "TOPRIGHT" or point == "TOP" then
+					yOfs = min(yOfs, yOfsMod)
+				else
+					yOfs = max(yOfs, -1 * yOfsMod)
+				end
+			end
+		end
 	else
 		if isBartender then
 			yOfs = yOfs - 40
@@ -96,19 +116,30 @@ local function UpdateBlizzardButtonIconID()
 	blizzardButtonIconID = iconID
 end
 
+local function ActiveButton_OnShow(self)
+	KT.ItemButton.OnShow(self)
+	self:UnregisterEvent("PLAYER_INSIDE_QUEST_BLOB_STATE_CHANGED")
+end
+
+local function SetHooks()
+	hooksecurefunc(KT_QuestObjectiveItemButtonMixin, "UpdateInsideBlob", function(self, questID, inside)
+		if questID == self:GetAttribute("questID") then
+			C_Timer.After(0, function()
+				M:Update((not dbChar.collapsed and inside) and questID or nil)
+			end)
+		end
+	end)
+end
+
 local function SetFrames()
 	-- Event frame
 	if not eventFrame then
 		eventFrame = CreateFrame("Frame")
-		eventFrame:SetScript("OnEvent", function(self, event, arg1)
+		eventFrame:SetScript("OnEvent", function(_, event)
 			_DBG("Event - "..event, true)
-			if event == "QUEST_WATCH_LIST_CHANGED" or
-					event == "ZONE_CHANGED" or
-					event == "QUEST_POI_UPDATE" then
-				M:Update()
-			elseif event == "UPDATE_EXTRA_ACTIONBAR" then
+			if event == "UPDATE_EXTRA_ACTIONBAR" then
 				UpdateBlizzardButtonIconID()
-				M:Update()
+				KT:Update()
 			elseif event == "UPDATE_BINDINGS" then
 				if activeFrame:IsShown() then
 					UpdateHotkey()
@@ -116,23 +147,24 @@ local function SetFrames()
 			elseif event == "PET_BATTLE_OPENING_START" then
 				KT:prot("Hide", activeFrame)
 			elseif event == "PET_BATTLE_CLOSE" then
-				M:Update()
+				KT:Update()
 			end
 		end)
 	end
-	eventFrame:RegisterEvent("QUEST_WATCH_LIST_CHANGED")
 	eventFrame:RegisterEvent("UPDATE_EXTRA_ACTIONBAR")
-	eventFrame:RegisterEvent("ZONE_CHANGED")
-	eventFrame:RegisterEvent("QUEST_POI_UPDATE")
 	eventFrame:RegisterEvent("UPDATE_BINDINGS")
 	eventFrame:RegisterEvent("PET_BATTLE_OPENING_START")
 	eventFrame:RegisterEvent("PET_BATTLE_CLOSE")
+
+	-- KT Buttons frame
+	KTF.Buttons:SetScript("OnHide", function()
+		M:Update()
+	end)
 
 	-- Main frame
 	if not KTF.ActiveFrame then
 		activeFrame = CreateFrame("Frame", nil, UIParent)
 		activeFrame:SetSize(256, 120)
-		activeFrame:SetClampedToScreen(true)
 		activeFrame:Hide()
 		KTF.ActiveFrame = activeFrame
 	else
@@ -151,7 +183,8 @@ local function SetFrames()
 
 	function mover:Hide()
 		self.mixin.Hide(self)
-		KT.ActiveButton:Update()
+		self.frame:Hide()
+		KT:Update()
 	end
 
 	function mover:OnDragStop(frame)
@@ -203,7 +236,7 @@ local function SetFrames()
 		
 		button:SetScript("OnEvent", KT.ItemButton.OnEvent)
 		button:SetScript("OnUpdate", KT.ItemButton.OnUpdate)
-		button:SetScript("OnShow", KT.ItemButton.OnShow)
+		button:SetScript("OnShow", ActiveButton_OnShow)
 		button:SetScript("OnHide", KT.ItemButton.OnHide)
 		button:SetScript("OnEnter", KT.ItemButton.OnEnter)
 		button:SetScript("OnLeave", KT.ItemButton.OnLeave)
@@ -235,8 +268,6 @@ end
 function M:OnInitialize()
 	_DBG("|cffffff00Init|r - "..self:GetName(), true)
 	
-	self.timer = 0
-	self.timerID = nil
 	self.initialized = false
 	
 	db = KT.db.profile
@@ -253,41 +284,15 @@ function M:OnEnable()
 	isTukui = C_AddOns.IsAddOnLoaded("Tukui")
 
 	SetFrames()
+	SetHooks()
 	self.initialized = true
-
-	self:Update()
 end
 
-function M:Update(id)
+function M:Update(questID)
 	if not db.qiActiveButton or not self.initialized or KT.EditMode.opened then return end
 
-	local closestQuestID
-	local minDistSqr = 30625
-
-	if id then
-		closestQuestID = id
-	else
-		if InCombatLockdown() then return end
-
-		if not dbChar.collapsed then
-			for questID, _ in pairs(KT.fixedButtons) do
-				if questID == C_SuperTrack.GetSuperTrackedQuestID() then
-					closestQuestID = questID
-					break
-				end
-				if QuestHasPOIInfo(questID) then
-					local distSqr, _ = C_QuestLog.GetDistanceSqToQuest(questID)
-					if distSqr and distSqr <= minDistSqr then
-						minDistSqr = distSqr
-						closestQuestID = questID
-					end
-				end
-			end
-		end
-	end
-
-	if closestQuestID then
-		local button = KT:GetFixedButton(closestQuestID)
+	if questID then
+		local button = KT:GetFixedButton(questID)
 		if button and button.item ~= blizzardButtonIconID then
 			local autoShowTooltip = false
 			if GameTooltip:IsShown() and GameTooltip:GetOwner() == abutton then
@@ -296,8 +301,8 @@ function M:Update(id)
 			end
 
 			abutton.block = button.block
-			abutton.questID = closestQuestID
-			abutton.questLogIndex = button.questLogIndex
+			abutton:SetAttribute("questLogIndex", button:GetAttribute("questLogIndex"))
+			abutton:SetAttribute("questID", questID)
 			abutton.charges = button.charges
 			abutton.rangeTimer = button.rangeTimer
 			abutton.item = button.item
@@ -308,9 +313,9 @@ function M:Update(id)
 			abutton.text:SetText(button.num)
 			abutton:SetAttribute("item", button.link)
 
-			if not activeFrame:IsShown() then
+			if not KT.locked and not activeFrame:IsShown() then
 				UpdateHotkey()
-				activeFrame:SetShown(not KT.locked)
+				activeFrame:Show()
 			end
 
 			if autoShowTooltip then
@@ -322,5 +327,4 @@ function M:Update(id)
 	else
 		ActiveFrame_Hide()
 	end
-	self.timer = 0
 end
